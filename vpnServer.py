@@ -15,7 +15,6 @@ class VPNServer:
         self.tun_ip = tun_ip
         self.tun_subnet = tun_subnet
         self.clients = {}
-        self.tun_fd = None
         self.device = Device()
     def create_tun_interface(self):
         try:  
@@ -42,7 +41,7 @@ class VPNServer:
                 
                 if len(data) >= 20:
                     try:
-                        os.write(self.tun_fd, data)
+                        os.write(self.device.getFileDesc(), data)
                         print(f"Forwarded {len(data)} bytes from client to TUN")
                     except OSError as e:
                         if e.errno == 22:
@@ -63,9 +62,9 @@ class VPNServer:
     def tun_to_clients(self):
         while True:
             try:
-                ready, nothing1, nothing2 = select.select([self.tun_fd], [], [], 1.0)
+                ready, nothing1, nothing2 = select.select([self.device.getFileDesc()], [], [], 1.0)
                 if ready:
-                    packet = os.read(self.tun_fd, 4096)
+                    packet = os.read(self.device.getFileDesc(), 4096)
                     if packet:
                         for client_id, client_socket in list(self.clients.items()):
                             try:
@@ -113,12 +112,9 @@ class VPNServer:
             print(f"Server error: {e}")
         finally:
             server_socket.close()
-            if self.tun_fd:
-                os.close(self.tun_fd)
-            try:
-                subprocess.run(['ip', 'link', 'delete', 'vpn0'], check=False)
-            except:
-                pass
+            if self.device.getFileDesc():
+                os.close(self.device.getFileDesc())
+            self.device.delete()
 
 if __name__ == "__main__":
     server = VPNServer()
