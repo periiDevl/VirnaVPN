@@ -6,7 +6,6 @@ class Device:
     def getFileDesc(self):
         return self.tunFd
     def createTUNInterface(self, tunIP):
-        """Create TUN interface on client"""
         try:
             TUNSETIFF = 0x400454ca
             IFF_TUN = 0x0001
