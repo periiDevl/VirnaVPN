@@ -1,0 +1,27 @@
+from vpnClient import *
+from vpnServer import *
+print("Welcome to pynVPN! a program by Jonathan Perii.")
+print("Are you Host or a Client? (H/C)\n")
+awn = input().lower()
+print("Great!")
+if (awn == "h"):
+    print("Hello Host!")
+    print("If there are any errors/VPN not working,")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print("contact support at : jonathan.peri56@gmail.com")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print("Make sure to check your routing!!")
+    print("ENTER YOUR IP")
+    ip = input()
+    server = VPNServer(ip)
+    server.start()
+if (awn == "c"):
+    print("Hello Client!")
+    print("This program is unstable and in development, if you find any errors:")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print("contact support at : jonathan.peri56@gmail.com")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print("ENTER SERVER IP")
+    ip = input()
+    client = VPNClient(ip)
+    client.start_client()
