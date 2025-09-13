@@ -76,7 +76,7 @@ class VPNClient:
                 print(e)
                 break
 
-    def start_client(self):
+    def start(self):
         print("Starting VPN Client...")
         self.createTunDevice()
         

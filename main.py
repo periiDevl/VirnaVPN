@@ -24,4 +24,4 @@ if (awn == "c"):
     print("ENTER SERVER IP")
     ip = input()
     client = VPNClient(ip)
-    client.start_client()
+    client.start()
