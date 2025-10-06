@@ -8,7 +8,7 @@ import select
 import time
 # My stuff:
 from Device import *
-
+from Packet import *
 
 class VPNClient:
     def __init__(self, server_ip='xxx.xxx.xxx.xxx', server_port=1194, client_tun_ip='192.168.100.2'):
@@ -18,7 +18,7 @@ class VPNClient:
         self.server_socket = None
         self.device = Device()
         self.server_address = (server_ip, server_port)
-
+        self.packet = Packet(self.server_ip, self.server_port, self.device)
     def createTunDevice(self):
         self.device.createTUNInterface(self.client_tun_ip)
 
@@ -26,9 +26,9 @@ class VPNClient:
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             
-            handshake = b"VPN_CLIENT_CONNECT"
+            handshake = b"VIRNA_CONNECT"
             self.server_socket.sendto(handshake, self.server_address)
-            
+            self.packet.setSocket(self.server_socket)
             print(f"Connected to {self.server_ip}:{self.server_port} via UDP")
             return True
         except Exception as e:
@@ -36,26 +36,7 @@ class VPNClient:
             return False
 
     def writeSeverToTun(self):
-        while True:
-            try:
-                data, server_addr = self.server_socket.recvfrom(4096)
-                
-                if server_addr != self.server_address:
-                    continue
-                    
-                if not data:
-                    print("Server connection closed")
-                    break
-                
-                if data == b"VPN_CLIENT_CONNECT":
-                    continue
-                    
-                os.write(self.device.getFileDesc(), data)
-                print(f"Wrote {len(data)} bytes to the TUN")
-            except Exception as e:
-                print(e)
-                break
-
+        self.packet.writeDataToTun()
     def sendTunToServer(self):
         while True:
             try:
