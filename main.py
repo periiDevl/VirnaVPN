@@ -1,5 +1,6 @@
 from vpnClient import *
 from vpnServer import *
+
 print("Welcome to pynVPN! a program by Jonathan Perii.")
 print("Are you Host or a Client? (H/C)\n")
 awn = input().lower()

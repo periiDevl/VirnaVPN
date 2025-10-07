@@ -11,16 +11,16 @@ from Device import *
 from Packet import *
 
 class VPNClient:
-    def __init__(self, server_ip='xxx.xxx.xxx.xxx', server_port=1194, client_tun_ip='192.168.100.2'):
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.client_tun_ip = client_tun_ip
+    def __init__(self, serverIp='xxx.xxx.xxx.xxx', serverPort=1194, clientTunIp='192.168.100.2'):
+        self.serverIp = serverIp
+        self.serverPort = serverPort
+        self.clientTunIp = clientTunIp
         self.server_socket = None
         self.device = Device()
-        self.server_address = (server_ip, server_port)
-        self.packet = Packet(self.server_ip, self.server_port, self.device)
+        self.server_address = (serverIp, serverPort)
+        self.packet = Packet(self.serverIp, self.serverPort, self.device)
     def createTunDevice(self):
-        self.device.createTUNInterface(self.client_tun_ip)
+        self.device.createTUNInterface(self.clientTunIp)
 
     def connect(self):
         try:
@@ -29,7 +29,7 @@ class VPNClient:
             handshake = b"VIRNA_CONNECT"
             self.server_socket.sendto(handshake, self.server_address)
             self.packet.setSocket(self.server_socket)
-            print(f"Connected to {self.server_ip}:{self.server_port} via UDP")
+            print(f"Connected to {self.serverIp}:{self.serverPort} via UDP")
             return True
         except Exception as e:
             print(e)
@@ -47,12 +47,12 @@ class VPNClient:
                     if packet and len(packet) >= 20:
                         try:
                             self.server_socket.sendto(packet, self.server_address)
-                            print(f"Forwarded{len(packet)}.")
+                            print(f"Forwarded {len(packet)} bytes.")
                         except Exception as send_error:
                             print(send_error)
                             break
                     else:
-                        print(f"Invalid packet: {len(packet) if packet else 0} bytes")
+                        print(f"Invalid packet.")
             except Exception as e:
                 print(e)
                 break
@@ -70,8 +70,8 @@ class VPNClient:
             server_thread.start()
             tun_thread.start()
             
-            print("Tunnel created!")
-            print(f"C_TUN IP: {self.client_tun_ip}")
+            print("Tunnel created!",flush=True)
+            print(f"C_TUN IP: {self.clientTunIp}",flush=True)
             
             while True:
                 time.sleep(1)

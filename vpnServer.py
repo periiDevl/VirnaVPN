@@ -6,38 +6,38 @@ import os
 import fcntl
 import select
 from Device import *
-
+from Encryptions import *
 
 class VPNServer:
-    def __init__(self, server_ip='xxx.xxx.xxx.xxx', server_port=1194, tun_ip='192.168.100.1', tun_subnet='192.168.100.0/24'):
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.tun_ip = tun_ip
-        self.tun_subnet = tun_subnet
+    def __init__(self, serverIp='xxx.xxx.xxx.xxx', serverPort=1194, tunIp='192.168.100.1', tunSubnet='192.168.100.0/24'):
+        self.serverIp = serverIp
+        self.serverPort = serverPort
+        self.tunIp = tunIp
+        self.tunSubnet = tunSubnet
         self.clients = {}
         self.device = Device()
         self.server_socket = None
     
     def createTun(self):
-        self.device.createTUNInterface(self.tun_ip)
+        self.device.createTUNInterface(self.tunIp)
         subprocess.run(['sysctl', 'net.ipv4.ip_forward=1'], check=True)
             
-        print(f"TUN interface vpn0 created with IP {self.tun_ip}")
+        print(f"TUN interface vpn0 created with IP {self.tunIp}")
     
     def handleClient(self):
         while True:
             try:
-                data, client_address = self.server_socket.recvfrom(4096)
+                data, clientAddress = self.server_socket.recvfrom(4096)
                 if not data:
                     continue
                 
-                client_id = f"{client_address[0]}:{client_address[1]}"
-                self.clients[client_id] = client_address
+                clientID = f"{clientAddress[0]}:{clientAddress[1]}"
+                self.clients[clientID] = clientAddress
                 
                 if len(data) >= 20:
                     try:
                         os.write(self.device.getFileDesc(), data)
-                        print(f"Forwarded {len(data)} bytes from client {client_address} to TUN")
+                        print(f"Forwarded {len(data)} bytes from client {clientAddress} to TUN")
                     except OSError as e:
                         if e.errno == 22:
                             print(f"Invalid packet: {len(data)} bytes")
@@ -56,14 +56,15 @@ class VPNServer:
                 if ready:
                     packet = os.read(self.device.getFileDesc(), 4096)
                     if packet:
-                        for client_id, client_address in list(self.clients.items()):
+                        for clientID, clientAddress in list(self.clients.items()):
                             try:
-                                self.server_socket.sendto(packet, client_address)
-                                print(f"Forwarded {len(packet)} bytes from TUN to client {client_address}")
+                                #First encrpyt text
+                                self.server_socket.sendto(packet, clientAddress)
+                                print(f"Forwarded {len(packet)} bytes from TUN to client {clientAddress}")
                             except Exception as e:
-                                print(f"Failed to send to client {client_id}: {e}")
-                                if client_id in self.clients:
-                                    del self.clients[client_id]
+                                print(f"Failed to send to client {clientID}: {e}")
+                                if clientID in self.clients:
+                                    del self.clients[clientID]
                                     
             except Exception as e:
                 print(f"Error in TUN forwarding: {e}")
@@ -79,8 +80,8 @@ class VPNServer:
         self.server_socket = server_socket
         
         try:
-            server_socket.bind((self.server_ip, self.server_port))
-            print(f"VPN Server listening on {self.server_ip}:{self.server_port}")
+            server_socket.bind((self.serverIp, self.serverPort))
+            print(f"VPN Server listening on {self.serverIp}:{self.serverPort}")
             
             tun_thread = threading.Thread(target=self.tunToClients, daemon=True)
             tun_thread.start()
