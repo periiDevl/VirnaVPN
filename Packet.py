@@ -5,6 +5,8 @@ class Packet:
         self.serverip = serverip
         self.severport = severport
         self.serverAdrr = (serverip, severport)
+    def getAESkey(self):
+        return self.AESkey
     def setSocket(self,socket):
         self.socket = socket
     def writeDataToTun(self):
@@ -17,6 +19,8 @@ class Packet:
                     print("Connection closed with the server.")
                 if data == b"VIRNA_CONNECT":
                     continue
+
+
                 os.write(self.device.getFileDesc(),data)
                 print(f"Wrote {len(data)} bytes to the OS Tun", flush=True)
 

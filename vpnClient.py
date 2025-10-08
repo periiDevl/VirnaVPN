@@ -9,7 +9,7 @@ import time
 # My stuff:
 from Device import *
 from Packet import *
-
+from Encryptions import *
 class VPNClient:
     def __init__(self, serverIp='xxx.xxx.xxx.xxx', serverPort=1194, clientTunIp='192.168.100.2'):
         self.serverIp = serverIp
@@ -19,6 +19,8 @@ class VPNClient:
         self.device = Device()
         self.server_address = (serverIp, serverPort)
         self.packet = Packet(self.serverIp, self.serverPort, self.device)
+        self.AESkey = None
+        self.enc = Encryptions()
     def createTunDevice(self):
         self.device.createTUNInterface(self.clientTunIp)
 
@@ -30,7 +32,29 @@ class VPNClient:
             self.server_socket.sendto(handshake, self.server_address)
             self.packet.setSocket(self.server_socket)
             print(f"Connected to {self.serverIp}:{self.serverPort} via UDP")
-            return True
+            while True:
+                data, addr = self.server_socket.recvfrom(4096)
+                print("got packet.")
+                if (self.AESkey == None):
+                        if data.startswith(b"AES:"):
+                            _,key, nonce = data.split(b":",3)
+                            self.AESkey = key
+                            self.enc.nonce = nonce
+                            print("AES packet recived.")
+                            print("Setting AES key...")
+                            self.enc.setKey(self.AESkey)
+                            self.enc.nonce = nonce
+                            print(f"Got the AES key from the server. {self.AESkey}")
+                            continue
+                else:
+                    print("Expecting handshake..",flush=True)
+                    print(self.enc.AESdecryptText(data))
+                    if (self.enc.AESdecryptText(data) == b"AESOK"):
+                        print("Handshake complete.", flush=True)
+                        return True
+                    return False
+                    
+                return True
         except Exception as e:
             print(e)
             return False
@@ -38,15 +62,17 @@ class VPNClient:
     def writeSeverToTun(self):
         self.packet.writeDataToTun()
     def sendTunToServer(self):
+        
         while True:
             try:
+                
                 # skip unless there is something to read
                 ready, nothing, nothing2 = select.select([self.device.getFileDesc()], [], [], 1.0)
                 if ready:
                     packet = os.read(self.device.getFileDesc(), 4096)
                     if packet and len(packet) >= 20:
                         try:
-                            self.server_socket.sendto(packet, self.server_address)
+                            self.server_socket.sendto(self.enc.AESdecryptText(packet), self.server_address)
                             print(f"Forwarded {len(packet)} bytes.")
                         except Exception as send_error:
                             print(send_error)

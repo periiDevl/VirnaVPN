@@ -12,6 +12,9 @@ class Encryptions:
         self.nonce = os.urandom(12)
         self.privateKey = None
         self.publicKey = None
+    def setKey(self, key):
+        self.AESkey = key;
+        self.aesgcm = AESGCM(self.AESkey)
     def AESencrypt(self, bytesText):
         return self.aesgcm.encrypt(self.nonce, bytesText, None)
     def AESdecryptText(self, text):
