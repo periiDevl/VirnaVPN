@@ -7,6 +7,9 @@ import fcntl
 import select
 from Device import *
 from Encryptions import *
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
 
 class VPNServer:
     def __init__(self, serverIp='xxx.xxx.xxx.xxx', serverPort=1194, tunIp='192.168.100.1', tunSubnet='192.168.100.0/24'):
@@ -17,34 +20,48 @@ class VPNServer:
         self.clients = {}
         self.device = Device()
         self.server_socket = None
-        self.clientsenc = Encryptions() #right now there is a vunrability where the key is the same for all users it will be fixed.
         self.enc = Encryptions()
         self.enc.AESgenrateKey()
+        self.enc.RSAgenrateKeys()
     def createTun(self):
         self.device.createTUNInterface(self.tunIp)
         subprocess.run(['sysctl', 'net.ipv4.ip_forward=1'], check=True)
             
         print(f"TUN interface vpn0 created with IP {self.tunIp}")
-    
     def handleClient(self):
-
-        strinnn = b"AES:" + self.enc.AESkey + b":" + self.enc.nonce
-
         while True:
             try:
                 data, clientAddress = self.server_socket.recvfrom(4096)
                 if not data:
                     continue
-                
+
                 clientID = f"{clientAddress[0]}:{clientAddress[1]}"
-                self.clients[clientID] = clientAddress
-                try:
-                    self.server_socket.sendto(strinnn, clientAddress)
-                    print("Send AES key.",flush=True)
-                    self.server_socket.sendto(self.enc.AESencrypt(b"AESOK"), clientAddress)
-                    print("Sent handshake.")
-                except:
-                    print("Error..")
+
+                if clientID not in self.clients:
+                    if data.startswith(b"RSA:"):
+                        pem_data = data[len(b"RSA:"):]
+                        self.enc.public_key = serialization.load_pem_public_key(pem_data)
+                    self.clients[clientID] = clientAddress
+                    encrypted_aes = self.enc.public_key.encrypt(
+                        self.enc.AESkey,
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None
+                        )
+                    )
+
+                    strinnn = b"AES:" + encrypted_aes + b":" + self.enc.nonce
+
+                    try:
+                        self.server_socket.sendto(strinnn, clientAddress)
+                        print(f"Sent AES key to new client {clientID}.", flush=True)
+                        self.server_socket.sendto(self.enc.AESencrypt(b"AESOK"), clientAddress)
+                        print("Sent handshake confirmation.")
+                    except Exception as e:
+                        print(f"Error sending AES key: {e}")
+                    continue
+
                 if len(data) >= 20:
                     try:
                         os.write(self.device.getFileDesc(), data)
@@ -56,10 +73,10 @@ class VPNServer:
                             raise
                 else:
                     print(f"Short packet: {len(data)} bytes")
-                    
+
             except Exception as e:
-                print(e)
-    
+                print(f"Error in handleClient: {e}")
+
     def tunToClients(self):
         
 

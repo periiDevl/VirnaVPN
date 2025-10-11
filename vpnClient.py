@@ -21,6 +21,7 @@ class VPNClient:
         self.packet = Packet(self.serverIp, self.serverPort, self.device)
         self.AESkey = None
         self.enc = Encryptions()
+        self.enc.RSAgenrateKeys()
     def createTunDevice(self):
         self.device.createTUNInterface(self.clientTunIp)
 
@@ -28,7 +29,7 @@ class VPNClient:
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             
-            handshake = b"VIRNA_CONNECT"
+            handshake = b"RSA:" + self.enc.publicKey
             self.server_socket.sendto(handshake, self.server_address)
             self.packet.setSocket(self.server_socket)
             print(f"Connected to {self.serverIp}:{self.serverPort} via UDP")
@@ -38,7 +39,7 @@ class VPNClient:
                 if (self.AESkey == None):
                         if data.startswith(b"AES:"):
                             _,key, nonce = data.split(b":",3)
-                            self.AESkey = key
+                            self.AESkey = self.enc.RSAdecrypt(key)
                             self.enc.nonce = nonce
                             print("AES packet recived.")
                             print("Setting AES key...")
