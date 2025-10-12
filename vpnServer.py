@@ -51,7 +51,7 @@ class VPNServer:
                         )
                     )
 
-                    strinnn = b"AES:" + encrypted_aes + b":" + self.enc.nonce
+                    strinnn = b"AES:::" + encrypted_aes + b":::" + self.enc.nonce
 
                     try:
                         self.server_socket.sendto(strinnn, clientAddress)

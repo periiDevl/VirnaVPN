@@ -46,3 +46,8 @@ class Encryptions:
             )
         )
 
+    def getPublicKeyBytes(self):
+        return self.public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
