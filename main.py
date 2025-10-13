@@ -15,6 +15,10 @@ if (awn == "h"):
     print("ENTER YOUR IP")
     ip = input()
     server = VPNServer(ip)
+    print("Are you on Ethernet/TAP? Enter (y/n)")
+    awn = input().lower()
+    if (awn == "y"):
+        server.IAMTAP()
     server.start()
 if (awn == "c"):
     print("Hello Client!")
@@ -25,4 +29,8 @@ if (awn == "c"):
     print("ENTER SERVER IP")
     ip = input()
     client = VPNClient(ip)
+    print("Are you on Ethernet/TAP? Enter (y/n)")
+    awn = input().lower()
+    if (awn == "y"):
+        client.IAMTAP()
     client.start()

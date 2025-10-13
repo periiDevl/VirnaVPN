@@ -21,9 +21,10 @@ class VPNClient:
         self.enc = Encryptions()
         self.packet = Packet(self.serverIp, self.serverPort, self.device, self.enc)
         self.AESkey = None
-        
+    def IAMTAP(self):
+        self.device.useTAP()
     def createTunDevice(self):
-        self.device.createTUNInterface(self.clientTunIp)
+        self.device.createInterface(self.clientTunIp)
 
     def connect(self):
         try:

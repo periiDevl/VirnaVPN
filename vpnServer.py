@@ -23,8 +23,10 @@ class VPNServer:
         self.enc = Encryptions()
         self.enc.AESgenrateKey()
         self.enc.RSAgenrateKeys()
+    def IAMTAP(self):
+        self.device.useTAP()
     def createTun(self):
-        self.device.createTUNInterface(self.tunIp)
+        self.device.createInterface(self.tunIp)
         subprocess.run(['sysctl', 'net.ipv4.ip_forward=1'], check=True)
             
         print(f"TUN interface vpn0 created with IP {self.tunIp}")
