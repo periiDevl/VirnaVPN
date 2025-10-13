@@ -64,7 +64,7 @@ class VPNServer:
 
                 if len(data) >= 20:
                     try:
-                        os.write(self.device.getFileDesc(), data)
+                        os.write(self.device.getFileDesc(), self.enc.AESdecryptText(data))
                         print(f"Forwarded {len(data)} bytes from client {clientAddress} to TUN")
                     except OSError as e:
                         if e.errno == 22:

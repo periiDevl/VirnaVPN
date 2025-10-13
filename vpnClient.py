@@ -18,9 +18,9 @@ class VPNClient:
         self.server_socket = None
         self.device = Device()
         self.server_address = (serverIp, serverPort)
-        self.packet = Packet(self.serverIp, self.serverPort, self.device)
-        self.AESkey = None
         self.enc = Encryptions()
+        self.packet = Packet(self.serverIp, self.serverPort, self.device, self.enc)
+        self.AESkey = None
         
     def createTunDevice(self):
         self.device.createTUNInterface(self.clientTunIp)
@@ -73,7 +73,7 @@ class VPNClient:
                     packet = os.read(self.device.getFileDesc(), 4096)
                     if packet and len(packet) >= 20:
                         try:
-                            self.server_socket.sendto(self.enc.AESdecryptText(packet), self.server_address)
+                            self.server_socket.sendto(self.enc.AESencrypt(packet), self.server_address)
                             print(f"Forwarded {len(packet)} bytes.")
                         except Exception as send_error:
                             print(send_error)

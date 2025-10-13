@@ -1,10 +1,12 @@
 from Device import *
+from Encryptions import *
 class Packet:
-    def __init__(self, serverip, severport,device):
+    def __init__(self, serverip, severport,device, encr):
         self.device = device
         self.serverip = serverip
         self.severport = severport
         self.serverAdrr = (serverip, severport)
+        self.enc = encr
     def getAESkey(self):
         return self.AESkey
     def setSocket(self,socket):
@@ -13,6 +15,7 @@ class Packet:
         while True:
             try:
                 data, addr = self.socket.recvfrom(4096)
+                data = self.enc.AESdecryptText(data)
                 if (addr != self.serverAdrr):
                     continue
                 if not data:
